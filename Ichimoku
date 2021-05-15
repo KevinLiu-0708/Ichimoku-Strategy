@@ -1,0 +1,42 @@
+Inputs: 
+Conv_Len(7),
+Base_Len(22), 
+Cloud_Len(44), 
+//StopLoss
+stopLossPercent(0.05), 
+min_holding(1);
+vars: Conv(0), Base(0), Cloud_A(0), Cloud_B(0);
+
+Conv = (highest(high,Conv_Len) + lowest(low,Conv_Len))/2;
+Base = (highest(high,Base_Len) + lowest(low,Base_Len))/2;
+
+Cloud_A=((Conv + Base)/2);
+Cloud_B=(highest(high,Cloud_Len) + lowest(low,Cloud_Len))/2;
+
+// Long-buy
+if marketposition >= 0 
+and Conv cross over Base 
+and close > Base and close > Cloud_A[Base_Len] and close > Cloud_B[Base_Len] then begin
+	buy("Long") next bar at open;
+end;
+
+// Stop-Loss Long
+if marketposition > 0 
+and ((close - entryprice)/entryprice <= -stopLossPercent 
+or (Conv < Base and barssinceentry >= min_holding)) then begin
+	sell("Sell-Long") next bar at open;
+end;
+
+// Short-sell
+if marketposition <= 0 
+and Base cross over Conv
+and close < Base and close < Cloud_A[Base_Len] and close < Cloud_B[Base_Len] then begin
+	sellshort("Short") next bar at open;
+end;
+
+// Stop-Loss short
+if marketposition < 0 
+and ((close - entryprice)/entryprice >= stopLossPercent 
+or (Conv > Base and barssinceentry >= min_holding)) then begin
+	buytocover("Buy-Short") next bar at open;
+end;
